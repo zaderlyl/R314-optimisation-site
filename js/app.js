@@ -75,11 +75,14 @@
     var list = UIKit.qs('#motscles');
     if (!list) return;
 
-    list.innerHTML = '';
+    var frag = document.createDocumentFragment();
     for (var i = 0; i < TAGS.length; i++) {
-      // On ajoute chaque entrée au fur et à mesure pour garder l'ordre.
-      list.innerHTML += '<option value="' + TAGS[i] + '"></option>';
+      var opt = document.createElement('option');
+      opt.value = TAGS[i];
+      frag.appendChild(opt);
     }
+    list.innerHTML = '';
+    list.appendChild(frag);
   }
 
   /* Construit le calendrier d'activité : 53 semaines de 7 jours, la teinte de
@@ -154,38 +157,51 @@
     }
   }
 
-  /* Aligne la hauteur des cartes et anime leur arrivée dans le viewport. */
+  /* Aligne la hauteur des cartes et anime leur arrivée dans le viewport.
+     Toutes les lectures du DOM précèdent les écritures, pour éviter les
+     reflows forcés. */
   function revealCards() {
     var cards = UIKit.qsa('.card');
+    var jours = UIKit.qsa('.cal-day');
+    var vh = window.innerHeight;
+    var i, tallest = 0;
 
-    for (var i = 0; i < cards.length; i++) {
-      var rect = cards[i].getBoundingClientRect();
-
-      // Hauteur de la plus grande carte, pour garder une grille régulière.
-      var tallest = 0;
-      var all = UIKit.qsa('.card');
-      for (var j = 0; j < all.length; j++) {
-        if (all[j].offsetHeight > tallest) {
-          tallest = all[j].offsetHeight;
-        }
+    // Lectures
+    var tops = [];
+    for (i = 0; i < cards.length; i++) {
+      tops.push(cards[i].getBoundingClientRect().top);
+      if (cards[i].offsetHeight > tallest) {
+        tallest = cards[i].offsetHeight;
       }
-      cards[i].style.minHeight = tallest + 'px';
+    }
+    var dist = [];
+    for (i = 0; i < jours.length; i++) {
+      dist.push(Math.abs(jours[i].getBoundingClientRect().top - vh / 2));
+    }
 
-      if (rect.top < window.innerHeight - 40) {
+    // Écritures
+    for (i = 0; i < cards.length; i++) {
+      cards[i].style.minHeight = tallest + 'px';
+      if (tops[i] < vh - 40) {
         UIKit.cls(cards[i], 'visible', true);
         cards[i].style.transform = 'translateY(0px)';
       } else {
         cards[i].style.transform = 'translateY(24px)';
       }
     }
-
-    // Les cases du calendrier apparaissent progressivement à l'approche.
-    var jours = UIKit.qsa('.cal-day');
-    for (var k = 0; k < jours.length; k++) {
-      var box = jours[k].getBoundingClientRect();
-      var d = Math.abs(box.top - window.innerHeight / 2);
-      jours[k].style.opacity = Math.max(0.15, 1 - d / window.innerHeight);
+    for (i = 0; i < jours.length; i++) {
+      jours[i].style.opacity = Math.max(0.15, 1 - dist[i] / vh);
     }
+  }
+
+  var revealPending = false;
+  function scheduleReveal() {
+    if (revealPending) return;
+    revealPending = true;
+    window.requestAnimationFrame(function () {
+      revealPending = false;
+      revealCards();
+    });
   }
 
   /* Affiche les images une fois chargées. */
@@ -210,7 +226,7 @@
     if (champ) champ.addEventListener('input', filterGallery);
   });
 
-  window.addEventListener('scroll', revealCards);
-  window.addEventListener('resize', revealCards);
+  window.addEventListener('scroll', scheduleReveal, { passive: true });
+  window.addEventListener('resize', scheduleReveal);
   window.addEventListener('load', revealCards);
 })();
