@@ -11,13 +11,13 @@ Nom Prénom — BUT MMI Béziers
 
 | Indicateur | Avant mobile | Avant ordinateur | Après mobile | Après ordinateur |
 |---|---|---|---|---|
-| Poids total | [[ ]] | [[ ]] | [[ ]] | [[ ]] |
-| Requêtes | [[ ]] | [[ ]] | [[ ]] | [[ ]] |
-| FCP | [[ ]] | [[ ]] | [[ ]] | [[ ]] |
-| LCP | [[ ]] | [[ ]] | [[ ]] | [[ ]] |
-| CLS | [[ ]] | [[ ]] | [[ ]] | [[ ]] |
-| TBT | [[ ]] | [[ ]] | [[ ]] | [[ ]] |
-| Score | [[ ]] | [[ ]] | [[ ]] | [[ ]] |
+| Poids total | 17,6 Mo | 17,6 Mo | 527 Ko (~0,5 Mo) | 527 Ko (~0,5 Mo) |
+| Requêtes | 22 | 22 | 15 | 15 |
+| FCP | 2,4 s | 0,9 s | 2,4 s | 0,6 s |
+| LCP | 67,1 s | 10,9 s | 2,5 s | 0,9 s |
+| CLS | 0 | 0,021 | 0 | 0,021 |
+| TBT | 160 ms | 220 ms | 0 ms | 0 ms |
+| Score | 60 | 57 | 92 | 99 |
 
 Limite méthodologique : le site n'a pas assez de trafic pour des données de terrain (CrUX) ; l'audit repose uniquement sur des données de laboratoire.
 
@@ -34,11 +34,11 @@ Limite méthodologique : le site n'a pas assez de trafic pour des données de te
 | 7 | `styles.css`, `extra.css` | ~2 000 règles `.redundant-N` / `.extra-N` jamais utilisées | Coverage ; recherche dans les pages | ~120 Ko | Supprimées (92 Ko → 4,7 Ko) |
 | 8 | `index.html:16` | `js/legacy/polyfills.js` inexistant | Réseau (404) | 1 aller-retour | Balise supprimée |
 | 9 | `index.html:17-18`, `img*.html` | Scripts sans `defer` dans le `<head>` | PageSpeed « Requêtes de blocage » | [[ ]] ms | `defer` |
-| 10 | `js/vendor/ui-kit.min.js:2` | Boucle de 620 ms + tableau de 240 000 objets inutilisé | Performances (tâche longue), PageSpeed | ~620 ms | Supprimés |
-| 11 | `js/vendor/ui-kit.min.js:2` | `MutationObserver` qui relit `getComputedStyle` de tout le DOM à chaque mutation | Performances, Bottom-Up | à chaque mutation | Supprimé |
+| 10 | `js/vendor/ui-kit.min.js:2` | Boucle de 620 ms + tableau de 240 000 objets inutilisé | Performances, Bottom-Up : `c` ui-kit.min.js:2:26 ; PageSpeed (tâche longue) | 467 ms de temps propre (Bottom-Up) | Supprimés |
+| 11 | `js/vendor/ui-kit.min.js:2` | `MutationObserver` qui relit `getComputedStyle` de tout le DOM à chaque mutation | Performances, Bottom-Up : `_sync` ui-kit.min.js:2:707 + `getComputedStyle` | 61 ms au total sur l'enregistrement | Supprimé |
 | 12 | `js/analytics.js` | Code obscurci : au-delà de 1024 px, après 6,5 s puis toutes les 2,6 s, bloque le thread de 46 à 430 ms ; n'envoie rien | Performances (enregistrement > 20 s, écran large) ; écart de TBT mobile/ordinateur | jusqu'à 430 ms | Supprimé |
-| 13 | `js/app.js` `revealCards` | Reflow forcé (lecture/écriture entrelacées, boucle imbriquée) à chaque scroll | Performances : Recalculate style / Forced reflow | à chaque scroll | Lectures puis écritures, `requestAnimationFrame`, écouteur passif |
-| 14 | `js/app.js` `buildKeywordIndex` | `innerHTML +=` dans une boucle (~320 réassignations) | Lecture du code (non mesuré) | 320 reparsages | `DocumentFragment` |
+| 13 | `js/app.js` `revealCards` | Reflow forcé (lecture/écriture entrelacées, boucle imbriquée) à chaque scroll | Performances, Bottom-Up : `revealCards` app.js:158 ; Forced reflow (Lighthouse) | 416 ms au total (10,2 %) | Lectures puis écritures, `requestAnimationFrame`, écouteur passif |
+| 14 | `js/app.js` `buildKeywordIndex` | `innerHTML +=` dans une boucle (~320 réassignations) | Performances, Bottom-Up : `buildKeywordIndex` app.js:74 | 1 937 ms de temps propre (47,5 %), 2 313 ms au total | `DocumentFragment` |
 
 Preuves à joindre (captures) : Réseau trié par taille, Lighthouse mobile et ordinateur, frise Performances + Bottom-Up, PageSpeed avant/après.
 
